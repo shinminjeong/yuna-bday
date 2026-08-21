@@ -306,25 +306,44 @@
   .send:active { transform: translateY(1px); }
   .finewrap { display: flex; flex-direction: column; gap: 10px; align-items: center; margin-top: 12px; }
   .fine { font-size: 13.5px; color: var(--ink-faint); text-align: center; margin: 0; }
+  /* Sits directly under the button so the answer appears where the tap was —
+     the page never scrolls away from it. */
   .done {
     display: none;
     align-items: center;
-    gap: 10px;
-    background: color-mix(in srgb, var(--mane-4) 20%, var(--card));
-    border: 1.5px solid color-mix(in srgb, var(--mane-4) 55%, var(--line));
-    border-radius: 14px;
-    padding: 12px 14px;
-    margin-bottom: 18px;
-    font-size: 14.5px;
-    font-weight: 600;
+    gap: 12px;
+    margin: 14px 0 0;
+    padding: 16px 18px;
+    border-radius: 16px;
+    background: color-mix(in srgb, var(--mane-4) 26%, var(--card));
+    border: 1.5px solid color-mix(in srgb, var(--mane-4) 62%, var(--line));
+    font-size: 16.5px;
+    font-weight: 700;
+    line-height: 1.35;
     color: var(--ink);
+    text-wrap: pretty;
   }
-  .done.show { display: flex; }
+  .done.show { display: flex; animation: pop .34s cubic-bezier(.2,.85,.3,1) both; }
+  @keyframes pop {
+    from { opacity: 0; transform: translateY(8px) scale(.97); }
+    to   { opacity: 1; transform: none; }
+  }
+  .done .tick {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: var(--mane-4);
+    color: #10453B;
+  }
   .done.warn {
-    background: color-mix(in srgb, var(--mane-2) 30%, var(--card));
-    border-color: color-mix(in srgb, var(--mane-2) 62%, var(--line));
+    background: color-mix(in srgb, var(--mane-2) 34%, var(--card));
+    border-color: color-mix(in srgb, var(--mane-2) 66%, var(--line));
   }
-  .done.warn svg { display: none; }
+  .done.warn .tick { display: none; }
   .send:disabled { opacity: .6; cursor: default; }
 
   footer {
@@ -345,6 +364,7 @@
 
   @media (prefers-reduced-motion: reduce) {
     .sparkle { animation: none; opacity: .6; }
+    .done.show { animation: none; }
     * { transition-duration: .01ms !important; }
   }
 </style>
@@ -406,10 +426,6 @@
     <h2 class="title">Are you coming?</h2>
     <p class="lede">Let us know so we get the party bags right.</p>
 
-    <div class="done" id="done">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg>
-      <span id="doneText">Thanks — your RSVP is on its way.</span>
-    </div>
 
 
     <form id="rsvpForm" novalidate>
@@ -447,6 +463,13 @@
       </div>
 
       <button class="send" type="submit">Send RSVP</button>
+
+      <p class="done" id="done" role="status" aria-live="polite">
+        <span class="tick" aria-hidden="true">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+        </span>
+        <span id="doneText">Thanks — your RSVP is on its way.</span>
+      </p>
 
     </form>
   </section>
@@ -542,13 +565,11 @@
           ? "Thank you — you're on the list. See you on the 19th!"
           : "Thanks for letting us know. We'll miss you!");
         document.getElementById("note").value = "";
-        done.scrollIntoView({ behavior: "smooth", block: "center" });
       }, function () {
         button.disabled = false;
         button.textContent = "Send RSVP";
         done.classList.add("warn");
         showDone("That didn't send. Please check your connection and try again.");
-        done.scrollIntoView({ behavior: "smooth", block: "center" });
       });
     });
 
