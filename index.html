@@ -320,6 +320,13 @@
     color: var(--ink);
   }
   .done.show { display: flex; }
+  .done.warn {
+    background: color-mix(in srgb, var(--mane-3) 26%, var(--card));
+    border-color: color-mix(in srgb, var(--mane-3) 60%, var(--line));
+  }
+  .done.warn svg { display: none; }   /* a tick is wrong when it failed */
+  #fallback { margin: -6px 0 18px; }
+  .send:disabled { opacity: .65; cursor: default; }
 
   footer {
     text-align: center;
@@ -405,6 +412,13 @@
       <span id="doneText">Thanks — your RSVP is on its way.</span>
     </div>
 
+    <p class="linkrow" id="fallback" hidden>
+      <a class="chip" id="formLink" href="#" target="_blank" rel="noopener">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 19L19 5M9 5h10v10"/></svg>
+        Open the RSVP form
+      </a>
+    </p>
+
     <form id="rsvpForm" novalidate>
       <div class="choice">
         <input type="radio" id="yes" name="attending" value="yes" checked>
@@ -477,6 +491,9 @@
     var doneText = document.getElementById("doneText");
     var whoInput = document.getElementById("who");
     var phoneIn  = document.getElementById("phone");
+    var fallback = document.getElementById("fallback");
+    document.getElementById("formLink").href =
+      "https://docs.google.com/forms/d/e/" + FORM_ID + "/viewform";
 
     function attending() {
       var el = form.querySelector('input[name="attending"]:checked');
@@ -507,29 +524,26 @@
       return body;
     }
 
-    // Google never answers with CORS headers, so the reply is opaque either
-    // way: post it and trust it, with a hidden form as the fallback for
-    // browsers that block the fetch.
-    function send(body) {
-      if (window.fetch) {
-        fetch(FORM_ACTION, { method: "POST", mode: "no-cors", body: body })
-          .catch(function () { postViaIframe(body); });
-      } else {
-        postViaIframe(body);
-      }
-    }
+    // A hidden form posting into a hidden iframe, NOT fetch(). fetch with
+    // mode:"no-cors" gets an opaque response, so a request that a phone
+    // silently drops (content blocker, tracking protection, the tab being
+    // backgrounded mid-flight) still looks like a success. A real form post
+    // is an ordinary navigation, and the iframe's load event tells us the
+    // reply actually came back.
+    function send(body, onResult) {
+      var stage = "blank";      // blank -> sent -> done
+      var sentAt = 0;
 
-    function postViaIframe(body) {
-      var name = "gform-sink";
       var frame = document.createElement("iframe");
-      frame.name = name;
-      frame.style.display = "none";
-      document.body.appendChild(frame);
+      frame.name = "gform-sink-" + (++send.n);
+      frame.setAttribute("aria-hidden", "true");
+      frame.setAttribute("tabindex", "-1");
+      frame.style.cssText = "position:absolute;left:-9999px;width:1px;height:1px;border:0";
 
       var f = document.createElement("form");
       f.action = FORM_ACTION;
       f.method = "POST";
-      f.target = name;
+      f.target = frame.name;
       f.style.display = "none";
       body.forEach(function (value, key) {
         var i = document.createElement("input");
@@ -538,10 +552,42 @@
         i.value = value;
         f.appendChild(i);
       });
+
+      function post() {
+        if (stage !== "blank") { return; }
+        stage = "sent";
+        sentAt = new Date().getTime();
+        try { f.submit(); } catch (err) { finish(false); }
+      }
+
+      function finish(ok) {
+        if (stage === "done") { return; }
+        stage = "done";
+        clearTimeout(kick);
+        clearTimeout(guard);
+        setTimeout(function () {
+          if (f.parentNode) { f.parentNode.removeChild(f); }
+          if (frame.parentNode) { frame.parentNode.removeChild(frame); }
+        }, 500);
+        onResult(ok);
+      }
+
+      // Two loads land on this frame: about:blank first, then Google's reply
+      // to the POST. The stage flag keeps them apart, and the 80ms floor
+      // stops a late blank load from being mistaken for the reply.
+      frame.addEventListener("load", function () {
+        if (stage === "blank") { post(); return; }
+        if (stage === "sent" && new Date().getTime() - sentAt > 80) { finish(true); }
+      });
+
+      frame.src = "about:blank";
+      document.body.appendChild(frame);
       document.body.appendChild(f);
-      f.submit();
-      setTimeout(function () { f.remove(); frame.remove(); }, 8000);
+
+      var kick  = setTimeout(post, 500);                            // no blank load? post anyway
+      var guard = setTimeout(function () { finish(false); }, 12000);
     }
+    send.n = 0;
 
     /* ---------------- submit ---------------- */
     form.addEventListener("submit", function (e) {
@@ -559,16 +605,32 @@
       }
 
       var coming = attending() === "yes";
-      send(payload(coming));
+      var button = form.querySelector(".send");
 
-      try { localStorage.setItem(SEEN, coming ? "yes" : "no"); } catch (err) {}
-
-      showDone(coming
-        ? "Thank you — you're on the list. See you on the 19th!"
-        : "Thanks for letting us know. We'll miss you!");
-
-      document.getElementById("note").value = "";
+      button.disabled = true;
+      button.textContent = "Sending…";
+      showDone("Sending your reply…");
       done.scrollIntoView({ behavior: "smooth", block: "center" });
+
+      send(payload(coming), function (ok) {
+        button.disabled = false;
+        button.textContent = "Send RSVP";
+
+        if (!ok) {
+          done.classList.add("warn");
+          showDone("That didn't go through — please tap the button below and send it on the form itself.");
+          fallback.hidden = false;
+          return;
+        }
+
+        done.classList.remove("warn");
+        fallback.hidden = true;
+        try { localStorage.setItem(SEEN, coming ? "yes" : "no"); } catch (err) {}
+        showDone(coming
+          ? "Thank you — you're on the list. See you on the 19th!"
+          : "Thanks for letting us know. We'll miss you!");
+        document.getElementById("note").value = "";
+      });
     });
 
     /* ---------------- returning guest ---------------- */
