@@ -8,27 +8,48 @@
 
 ---
 
-## 구글 폼 연동 (연결 완료)
+## RSVP가 저장되는 경로
 
-RSVP는 아래 폼으로 전송되어 응답 시트에 쌓입니다.
+```
+브라우저 폼  ──POST /api/rsvp──▶  Vercel 서버리스 함수  ──POST──▶  구글 폼 ──▶ 응답 시트
+   (같은 출처)                        (api/rsvp.js)
+```
+
+브라우저는 **자기 사이트 주소로만** 요청합니다. 예전에는 브라우저가 직접
+`docs.google.com`으로 보냈는데, 모바일에서 그 요청이 차단돼서 응답이 유실됐습니다
+(데스크톱은 정상). 서버가 대신 보내면서 그 문제가 사라졌고, 같은 출처 요청이라
+**진짜 상태 코드를 받을 수 있어서** 실패를 감지해 사용자에게 알릴 수 있습니다.
 
 - 폼: <https://docs.google.com/forms/d/e/1FAIpQLSfuMaCe0OQw4aOE2MTk4_yowqCLRJXGKaIghE_MfUMeN4mCJA/viewform>
-- 응답 보기: 폼 편집 화면 → **응답** 탭 → 스프레드시트 아이콘 → 거기서 CSV로 내려받기
+- 응답 보기: 폼 편집 화면 → **응답** 탭 → 스프레드시트 아이콘 → CSV 다운로드
 
-`index.html`의 `<script>` 맨 위 설정이 폼의 질문과 이렇게 연결돼 있습니다.
+폼 ID와 entry ID는 이제 `api/rsvp.js` 안에 있습니다 (`index.html`에는 없음).
 
-| 폼 질문 | 유형 | entry ID | 코드의 필드 |
-|---------|------|----------|-------------|
-| Attending | 단답형 | `entry.1773114326` | `attending` (`Coming` / `Can't come`) |
-| Name | 단답형 | `entry.1222470394` | `name` |
-| Phone | 단답형 | `entry.1637117082` | `phone` |
-| Kids | 단답형 | `entry.2125723721` | `kids` |
-| Adults | 단답형 | `entry.1929876314` | `adults` |
-| Note | 장문형 | `entry.1326875089` | `note` |
+| 폼 질문 | 유형 | entry ID |
+|---------|------|----------|
+| Attending | 단답형 | `entry.1773114326` |
+| Name | 단답형 | `entry.1222470394` |
+| Phone | 단답형 | `entry.1637117082` |
+| Kids | 단답형 | `entry.2125723721` |
+| Adults | 단답형 | `entry.1929876314` |
+| Note | 장문형 | `entry.1326875089` |
 
-⚠️ **폼의 질문을 지우고 다시 만들면 entry ID가 바뀝니다.** 그럴 땐 폼 편집 화면
-**⋮ → 사전 작성된 링크 가져오기**로 새 ID를 확인해서 `FIELDS`를 갱신하세요.
-질문 문구만 고치는 건 ID가 유지되므로 안전합니다.
+⚠️ 폼 질문을 **삭제하고 다시 만들면 entry ID가 바뀝니다.** 그럴 땐 폼 편집 화면
+**⋮ → 사전 작성된 링크 가져오기**로 새 ID를 확인해 `api/rsvp.js`의 `FIELDS`를 고치세요.
+질문 문구만 수정하는 건 ID가 유지되므로 안전합니다.
+
+### 릴레이 함수 직접 테스트
+
+```sh
+node -e '
+const h = require("./api/rsvp.js");
+h({method:"POST", body:{attending:"yes", name:"test", phone:"0400 000 000",
+   kids:"1", adults:"1", note:""}},
+  {setHeader(){}, status(c){this.c=c;return this}, json(o){console.log(this.c,o)}});
+'
+```
+
+`200 { ok: true }` 가 나오면 시트까지 들어간 것입니다 (테스트 행은 지워주세요).
 
 ## 4. Vercel 배포
 

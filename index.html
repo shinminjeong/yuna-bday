@@ -320,6 +320,12 @@
     color: var(--ink);
   }
   .done.show { display: flex; }
+  .done.warn {
+    background: color-mix(in srgb, var(--mane-2) 30%, var(--card));
+    border-color: color-mix(in srgb, var(--mane-2) 62%, var(--line));
+  }
+  .done.warn svg { display: none; }
+  .send:disabled { opacity: .6; cursor: default; }
 
   footer {
     text-align: center;
@@ -452,24 +458,13 @@
 
 <script>
   (function () {
-    /* ------------------------------------------------------------------
-       GOOGLE FORM — replies are posted straight to the form, so they land
-       in its response sheet. If the form's questions are ever deleted and
-       recreated their entry ids change: read the new ones from
-       ⋮ → "Get pre-filled link" and update FIELDS.
-       ------------------------------------------------------------------ */
-    var FORM_ID = "1FAIpQLSfuMaCe0OQw4aOE2MTk4_yowqCLRJXGKaIghE_MfUMeN4mCJA";
+    // The reply goes to this site's own /api/rsvp, which forwards it to the
+    // Google Form server-side. Nothing on the guest's phone has to reach
+    // docs.google.com — that request was being blocked on mobile — and a
+    // same-origin call returns a real status code instead of an opaque one,
+    // so the page can tell the guest the truth.
+    var ENDPOINT = "/api/rsvp";
 
-    var FIELDS = {
-      attending: "entry.1773114326",
-      name:      "entry.1222470394",
-      phone:     "entry.1637117082",
-      kids:      "entry.2125723721",
-      adults:    "entry.1929876314",
-      note:      "entry.1326875089"
-    };
-
-    var FORM_ACTION = "https://docs.google.com/forms/d/e/" + FORM_ID + "/formResponse";
     var form     = document.getElementById("rsvpForm");
     var counts   = document.getElementById("counts");
     var done     = document.getElementById("done");
@@ -494,66 +489,30 @@
       done.classList.add("show");
     }
 
-    /* ---------------- send to the google form ---------------- */
+    /* ---------------- send ---------------- */
     function payload(coming) {
-      var body = new URLSearchParams();
-      body.append(FIELDS.attending, coming ? "Coming" : "Can’t come");
-      body.append(FIELDS.name,   whoInput.value.trim());
-      body.append(FIELDS.phone,  phoneIn.value.trim());
-      body.append(FIELDS.kids,   coming ? (document.getElementById("kids").value || "0") : "");
-      body.append(FIELDS.adults, coming ? (document.getElementById("adults").value || "0") : "");
-      body.append(FIELDS.note,   document.getElementById("note").value.trim());
-      return body;
+      return {
+        attending: coming ? "yes" : "no",
+        name:   whoInput.value.trim(),
+        phone:  phoneIn.value.trim(),
+        kids:   coming ? (document.getElementById("kids").value || "0") : "",
+        adults: coming ? (document.getElementById("adults").value || "0") : "",
+        note:   document.getElementById("note").value.trim()
+      };
     }
 
-    // sendBeacon is built for exactly this: a fire-and-forget cross-origin
-    // POST the browser takes responsibility for, so it survives the page
-    // being backgrounded — the usual way a phone loses an in-flight request.
-    // fetch(mode:"no-cors") was the old approach and is a trap here: its
-    // response is opaque, so a dropped request is indistinguishable from a
-    // delivered one. A plain form post into a hidden iframe covers the rest.
-    function send(body) {
-      try {
-        if (navigator.sendBeacon) {
-          var blob = new Blob([body.toString()], {
-            type: "application/x-www-form-urlencoded;charset=UTF-8"
-          });
-          if (navigator.sendBeacon(FORM_ACTION, blob)) { return; }
-        }
-      } catch (err) {}
-      postViaIframe(body);
-    }
-
-    function postViaIframe(body) {
-      var frame = document.createElement("iframe");
-      frame.name = "gform-sink-" + (++postViaIframe.n);
-      frame.setAttribute("aria-hidden", "true");
-      frame.setAttribute("tabindex", "-1");
-      frame.style.cssText = "position:absolute;left:-9999px;width:1px;height:1px;border:0";
-
-      var f = document.createElement("form");
-      f.action = FORM_ACTION;
-      f.method = "POST";
-      f.target = frame.name;
-      f.style.display = "none";
-      body.forEach(function (value, key) {
-        var i = document.createElement("input");
-        i.type = "hidden";
-        i.name = key;
-        i.value = value;
-        f.appendChild(i);
+    function send(data) {
+      return fetch(ENDPOINT, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data)
+      }).then(function (res) {
+        if (!res.ok) { throw new Error("status " + res.status); }
+        return res.json();
+      }).then(function (result) {
+        if (!result || !result.ok) { throw new Error("not ok"); }
       });
-
-      document.body.appendChild(frame);
-      document.body.appendChild(f);
-      try { f.submit(); } catch (err) {}
-
-      setTimeout(function () {
-        if (f.parentNode) { f.parentNode.removeChild(f); }
-        if (frame.parentNode) { frame.parentNode.removeChild(frame); }
-      }, 15000);
     }
-    postViaIframe.n = 0;
 
     /* ---------------- submit ---------------- */
     form.addEventListener("submit", function (e) {
@@ -571,14 +530,26 @@
       }
 
       var coming = attending() === "yes";
-      send(payload(coming));
+      var button = form.querySelector(".send");
 
-      showDone(coming
-        ? "Thank you — you're on the list. See you on the 19th!"
-        : "Thanks for letting us know. We'll miss you!");
+      button.disabled = true;
+      button.textContent = "Sending…";
+      done.classList.remove("show", "warn");
 
-      document.getElementById("note").value = "";
-      done.scrollIntoView({ behavior: "smooth", block: "center" });
+      send(payload(coming)).then(function () {
+        button.textContent = "Sent";
+        showDone(coming
+          ? "Thank you — you're on the list. See you on the 19th!"
+          : "Thanks for letting us know. We'll miss you!");
+        document.getElementById("note").value = "";
+        done.scrollIntoView({ behavior: "smooth", block: "center" });
+      }, function () {
+        button.disabled = false;
+        button.textContent = "Send RSVP";
+        done.classList.add("warn");
+        showDone("That didn't send. Please check your connection and try again.");
+        done.scrollIntoView({ behavior: "smooth", block: "center" });
+      });
     });
 
   })();
