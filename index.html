@@ -117,7 +117,7 @@
   .hero {
     position: relative;
     overflow: hidden;
-    padding: 30px 26px 26px;
+    padding: 54px 26px 46px;
     text-align: center;
     display: flex;
     flex-direction: column;
@@ -133,24 +133,23 @@
       var(--mane-1), var(--mane-2), var(--mane-3),
       var(--mane-4), var(--mane-5), var(--mane-6));
   }
-  .unicorn { width: min(230px, 62vw); height: auto; display: block; margin: 4px 0 -6px; }
   .hero h1 {
     font-family: "Fraunces", Georgia, serif;
     font-variation-settings: "SOFT" 100, "WONK" 1, "opsz" 144;
     font-weight: 600;
-    font-size: clamp(26px, 7vw, 34px);
+    font-size: clamp(27px, 7.2vw, 36px);
     line-height: 1.1;
     letter-spacing: -.01em;
-    margin: 6px 0 0;
+    margin: 10px 0 0;
     text-wrap: balance;
   }
   .five {
     font-family: "Fraunces", Georgia, serif;
     font-variation-settings: "SOFT" 100, "WONK" 1, "opsz" 144;
     font-weight: 900;
-    font-size: clamp(76px, 25vw, 128px);
+    font-size: clamp(92px, 30vw, 152px);
     line-height: .82;
-    margin: 10px 0 2px;
+    margin: 6px 0 0;
     background: linear-gradient(158deg, var(--foil-1) 8%, var(--foil-2) 44%, var(--foil-1) 62%, var(--foil-2) 96%);
     -webkit-background-clip: text;
     background-clip: text;
@@ -167,9 +166,9 @@
   .sparkle { animation: twinkle 4.5s ease-in-out infinite; }
   .s1 { top: 26px;  left: 22px;  animation-delay: 0s;   }
   .s2 { top: 62px;  right: 26px; animation-delay: 1.1s; }
-  .s3 { top: 140px; left: 34px;  animation-delay: 2.3s; }
+  .s3 { bottom: 46px; left: 40px;  animation-delay: 2.3s; }
   .s4 { top: 18px;  right: 74px; animation-delay: 3.2s; }
-  .s5 { bottom: 74px; right: 20px; animation-delay: 1.8s; }
+  .s5 { bottom: 58px; right: 30px; animation-delay: 1.8s; }
 
   /* ---------- ticket / details ---------- */
   .ticket { padding: 4px 26px 8px; }
@@ -357,56 +356,6 @@
 
     <p class="eyebrow">Please come and play</p>
 
-    <svg class="unicorn" viewBox="0 0 300 262" role="img" aria-label="A unicorn with a golden horn and a rainbow mane">
-      <defs>
-        <linearGradient id="hornG" x1="0" y1="1" x2="1" y2="0">
-          <stop offset="0%" stop-color="var(--foil-2)"/>
-          <stop offset="50%" stop-color="var(--foil-1)"/>
-          <stop offset="100%" stop-color="var(--foil-2)"/>
-        </linearGradient>
-      </defs>
-
-      <!-- mane, drawn behind the head -->
-      <g fill="none" stroke-width="14" stroke-linecap="round">
-        <path d="M198 78 C242 70 268 100 258 134" stroke="var(--mane-1)"/>
-        <path d="M204 100 C248 100 272 130 260 164" stroke="var(--mane-2)"/>
-        <path d="M206 124 C248 130 268 160 252 190" stroke="var(--mane-3)"/>
-        <path d="M204 148 C240 160 254 188 236 212" stroke="var(--mane-4)"/>
-        <path d="M196 170 C226 186 236 210 218 232" stroke="var(--mane-5)"/>
-      </g>
-
-      <!-- ear -->
-      <path d="M196 76 L206 36 L226 78 Z" fill="var(--coat)" stroke="var(--coat-line)" stroke-width="5" stroke-linejoin="round"/>
-      <path d="M203 70 L208 50 L216 72 Z" fill="var(--mane-1)"/>
-
-      <!-- horn -->
-      <path d="M146 84 C150 60 160 30 177 6 C181 32 178 62 170 78 Z"
-            fill="url(#hornG)" stroke="var(--coat-line)" stroke-width="4.5" stroke-linejoin="round"/>
-      <g stroke="var(--coat-line)" stroke-width="3.5" stroke-linecap="round" opacity=".55">
-        <path d="M152 68 L169 62"/>
-        <path d="M158 50 L172 45"/>
-        <path d="M165 32 L175 28"/>
-      </g>
-
-      <!-- head -->
-      <path d="M96 214 C74 208 62 196 62 180 C62 167 70 159 80 153
-               C97 144 113 130 127 110 C139 93 148 79 162 71
-               C182 59 207 66 215 89 C223 111 216 141 200 163
-               C186 183 160 205 136 214 C124 219 108 218 96 214 Z"
-            fill="var(--coat)" stroke="var(--coat-line)" stroke-width="6" stroke-linejoin="round"/>
-
-      <!-- closed, happy eye -->
-      <path d="M141 116 C147 106 158 106 164 116" fill="none" stroke="var(--coat-line)" stroke-width="6" stroke-linecap="round"/>
-      <!-- cheek blush -->
-      <ellipse cx="128" cy="146" rx="15" ry="10" fill="var(--mane-1)" opacity=".38"/>
-      <!-- nostril -->
-      <ellipse cx="82" cy="177" rx="6" ry="8" fill="var(--coat-line)" transform="rotate(-18 82 177)"/>
-      <!-- smile -->
-      <path d="M70 194 C78 200 88 200 95 195" fill="none" stroke="var(--coat-line)" stroke-width="5" stroke-linecap="round"/>
-
-      <!-- forelock over the brow -->
-      <path d="M172 66 C152 76 144 96 150 114" fill="none" stroke="var(--mane-6)" stroke-width="14" stroke-linecap="round"/>
-    </svg>
 
     <h1>Yuna is turning</h1>
     <div class="five" aria-hidden="true">five</div>
