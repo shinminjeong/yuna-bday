@@ -39,8 +39,3 @@ npx vercel --prod   # 실제 배포
 
 또는 이 저장소를 GitHub에 올리고 [vercel.com/new](https://vercel.com/new) 에서 import 하면 됩니다.
 빌드 설정은 건드릴 필요 없습니다 — Framework Preset은 **Other**, 나머지는 비워두세요.
-
-## 페이지 안의 "RSVP log"
-
-맨 아래 작은 `RSVP log` 링크는 **그 기기에서 제출된 응답만** 보여주는 예비 기록입니다
-(구글 폼이 먹통일 때를 대비한 백업). 전체 명단은 항상 구글 시트를 보세요.

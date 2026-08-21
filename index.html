@@ -307,13 +307,6 @@
   .send:active { transform: translateY(1px); }
   .finewrap { display: flex; flex-direction: column; gap: 10px; align-items: center; margin-top: 12px; }
   .fine { font-size: 13.5px; color: var(--ink-faint); text-align: center; margin: 0; }
-  .ghost {
-    font: inherit; font-size: 13.5px; font-weight: 600;
-    background: none; border: 0; padding: 4px;
-    color: var(--berry-deep); cursor: pointer;
-    text-decoration: underline; text-underline-offset: 3px;
-  }
-
   .done {
     display: none;
     align-items: center;
@@ -328,63 +321,6 @@
     color: var(--ink);
   }
   .done.show { display: flex; }
-
-  /* ---------- rsvp log (host view) ---------- */
-  .logcard { padding: 22px 24px 24px; }
-  .loghead {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: 14px;
-    margin-bottom: 4px;
-  }
-  .logcard .title {
-    font-family: "Fraunces", Georgia, serif;
-    font-variation-settings: "SOFT" 100, "WONK" 1, "opsz" 144;
-    font-weight: 700;
-    font-size: 24px;
-    margin: 4px 0 0;
-  }
-  .tally {
-    font-size: 13px;
-    font-weight: 700;
-    color: var(--berry-deep);
-    background: color-mix(in srgb, var(--berry) 12%, transparent);
-    border-radius: 999px;
-    padding: 5px 12px;
-    white-space: nowrap;
-    font-variant-numeric: tabular-nums;
-  }
-  .entry {
-    display: grid;
-    grid-template-columns: 1fr auto;
-    gap: 4px 12px;
-    padding: 14px 0;
-    border-bottom: 1px dashed var(--line);
-  }
-  .entry:last-of-type { border-bottom: 0; }
-  .entry .name { font-weight: 700; font-size: 16px; margin: 0; }
-  .entry .meta { grid-column: 1 / -1; margin: 0; color: var(--ink-soft); font-size: 14.5px; }
-  .entry .meta a { color: inherit; }
-  .entry .note { grid-column: 1 / -1; margin: 4px 0 0; font-size: 14.5px; color: var(--ink); }
-  .entry .stamp { grid-column: 1 / -1; margin: 4px 0 0; font-size: 12.5px; color: var(--ink-faint); }
-  .pill {
-    font-size: 12px;
-    font-weight: 700;
-    letter-spacing: .06em;
-    text-transform: uppercase;
-    border-radius: 999px;
-    padding: 4px 10px;
-    white-space: nowrap;
-    align-self: start;
-  }
-  .pill.in  { color: #12463C; background: var(--mane-4); }
-  .pill.out { color: var(--ink-soft); background: color-mix(in srgb, var(--ink-faint) 22%, transparent); }
-  .empty { color: var(--ink-faint); font-size: 15px; margin: 10px 0 4px; }
-  .chip.warn { color: var(--ink-faint); }
-  .chip.warn:hover { border-color: var(--ink-faint); background: color-mix(in srgb, var(--ink-faint) 10%, transparent); }
-  .ghost.tiny { display: block; margin: 10px auto 0; font-size: 12.5px; color: var(--ink-faint); text-decoration: none; }
-  .ghost.tiny:hover { color: var(--berry); text-decoration: underline; }
 
   footer {
     text-align: center;
@@ -556,47 +492,23 @@
 
       <button class="send" type="submit">Send RSVP</button>
 
-      <div class="finewrap">
-        <p class="fine">One tap and you're done — nothing else to send.</p>
-      </div>
     </form>
   </section>
 
-  <!-- ============ RSVP LOG (host) ============ -->
-  <section class="card logcard" id="logCard" hidden>
-    <div class="loghead">
-      <div>
-        <p class="eyebrow">Host only · this device</p>
-        <h2 class="title">RSVP log</h2>
-      </div>
-      <span class="tally" id="tally">—</span>
-    </div>
-    <div id="logBody"></div>
-    <div class="linkrow">
-      <button class="chip" type="button" id="dlCsv">Save as CSV</button>
-      <button class="chip" type="button" id="copyLog">Copy all</button>
-      <button class="chip warn" type="button" id="clearLog">Clear log</button>
-    </div>
-  </section>
-
   <footer>
-    <span class="sig">See you at the ball pit</span>
     Yuna &amp; family
-    <button class="ghost tiny" type="button" id="logToggle">RSVP log</button>
   </footer>
 </main>
 
 <script>
   (function () {
     /* ------------------------------------------------------------------
-       GOOGLE FORM
-       Replies are posted to a Google Form, so they land in its response
-       sheet. To wire it up, open your form → ⋮ → "Get pre-filled link",
-       fill every question with dummy text, press "Get link", and read the
-       ids out of the URL it gives you. Then fill both blocks below.
-       Until FORM_ID is set, replies are only kept in this browser.
+       GOOGLE FORM — replies are posted straight to the form, so they land
+       in its response sheet. If the form's questions are ever deleted and
+       recreated their entry ids change: read the new ones from
+       ⋮ → "Get pre-filled link" and update FIELDS.
        ------------------------------------------------------------------ */
-    var FORM_ID = "1FAIpQLSfuMaCe0OQw4aOE2MTk4_yowqCLRJXGKaIghE_MfUMeN4mCJA";   // the long id in .../forms/d/e/<THIS>/viewform
+    var FORM_ID = "1FAIpQLSfuMaCe0OQw4aOE2MTk4_yowqCLRJXGKaIghE_MfUMeN4mCJA";
 
     var FIELDS = {
       attending: "entry.1773114326",
@@ -607,17 +519,8 @@
       note:      "entry.1326875089"
     };
 
-    function formConfigured() {
-      return FORM_ID.indexOf("PASTE_") !== 0 && FIELDS.name.indexOf("entry.0000000000") !== 0;
-    }
-    function formAction() {
-      return "https://docs.google.com/forms/d/e/" + FORM_ID + "/formResponse";
-    }
-    function formView() {
-      return "https://docs.google.com/forms/d/e/" + FORM_ID + "/viewform";
-    }
-
-    var STORE = "yuna5.rsvps";          // local backup of replies made on this device
+    var FORM_ACTION = "https://docs.google.com/forms/d/e/" + FORM_ID + "/formResponse";
+    var SEEN = "yuna5.replied";   // just so a returning guest sees their answer
 
     var form     = document.getElementById("rsvpForm");
     var counts   = document.getElementById("counts");
@@ -625,24 +528,7 @@
     var doneText = document.getElementById("doneText");
     var whoInput = document.getElementById("who");
     var phoneIn  = document.getElementById("phone");
-    var logCard  = document.getElementById("logCard");
-    var logBody  = document.getElementById("logBody");
-    var tally    = document.getElementById("tally");
 
-    /* ---------------- storage ---------------- */
-    function load() {
-      try {
-        var raw = localStorage.getItem(STORE);
-        var arr = raw ? JSON.parse(raw) : [];
-        return Array.isArray(arr) ? arr : [];
-      } catch (err) { return []; }
-    }
-    function save(list) {
-      try { localStorage.setItem(STORE, JSON.stringify(list)); return true; }
-      catch (err) { return false; }
-    }
-
-    /* ---------------- form ---------------- */
     function attending() {
       var el = form.querySelector('input[name="attending"]:checked');
       return el ? el.value : "yes";
@@ -660,69 +546,24 @@
       done.classList.add("show");
     }
 
-    form.addEventListener("submit", function (e) {
-      e.preventDefault();
-
-      if (!whoInput.value.trim()) {
-        whoInput.focus();
-        whoInput.placeholder = "Please pop your name in here first";
-        return;
-      }
-      if (!phoneIn.value.trim()) {
-        phoneIn.focus();
-        phoneIn.placeholder = "A number so we can reach you";
-        return;
-      }
-
-      var coming = attending() === "yes";
-      var entry = {
-        at: new Date().toISOString(),
-        attending: coming ? "yes" : "no",
-        name: whoInput.value.trim(),
-        phone: phoneIn.value.trim(),
-        kids: coming ? (document.getElementById("kids").value || "0") : "",
-        adults: coming ? (document.getElementById("adults").value || "0") : "",
-        note: document.getElementById("note").value.trim()
-      };
-
-      var list = load();
-      list.push(entry);
-      save(list);
-
-      sendToGoogle(entry);
-
-      showDone(coming
-        ? "Thank you — you're on the list. See you on the 19th!"
-        : "Thanks for letting us know. We'll miss you!");
-
-      document.getElementById("note").value = "";
-      render();
-      done.scrollIntoView({ behavior: "smooth", block: "center" });
-    });
-
     /* ---------------- send to the google form ---------------- */
-    function payload(entry) {
+    function payload(coming) {
       var body = new URLSearchParams();
-      body.append(FIELDS.attending, entry.attending === "yes" ? "Coming" : "Can\u2019t come");
-      body.append(FIELDS.name,  entry.name);
-      body.append(FIELDS.phone, entry.phone);
-      body.append(FIELDS.kids,   entry.kids   || "0");
-      body.append(FIELDS.adults, entry.adults || "0");
-      body.append(FIELDS.note,   entry.note   || "");
+      body.append(FIELDS.attending, coming ? "Coming" : "Can’t come");
+      body.append(FIELDS.name,   whoInput.value.trim());
+      body.append(FIELDS.phone,  phoneIn.value.trim());
+      body.append(FIELDS.kids,   coming ? (document.getElementById("kids").value || "0") : "");
+      body.append(FIELDS.adults, coming ? (document.getElementById("adults").value || "0") : "");
+      body.append(FIELDS.note,   document.getElementById("note").value.trim());
       return body;
     }
 
     // Google never answers with CORS headers, so the reply is opaque either
     // way: post it and trust it, with a hidden form as the fallback for
     // browsers that block the fetch.
-    function sendToGoogle(entry) {
-      if (!formConfigured()) {
-        console.warn("RSVP kept in this browser only — FORM_ID is not set yet.");
-        return;
-      }
-      var body = payload(entry);
+    function send(body) {
       if (window.fetch) {
-        fetch(formAction(), { method: "POST", mode: "no-cors", body: body })
+        fetch(FORM_ACTION, { method: "POST", mode: "no-cors", body: body })
           .catch(function () { postViaIframe(body); });
       } else {
         postViaIframe(body);
@@ -737,7 +578,7 @@
       document.body.appendChild(frame);
 
       var f = document.createElement("form");
-      f.action = formAction();
+      f.action = FORM_ACTION;
       f.method = "POST";
       f.target = name;
       f.style.display = "none";
@@ -753,182 +594,43 @@
       setTimeout(function () { f.remove(); frame.remove(); }, 8000);
     }
 
-    /* ---------------- log ---------------- */
-    function fmtWhen(iso) {
-      var d = new Date(iso);
-      if (isNaN(d)) { return iso; }
-      return d.toLocaleString(undefined, {
-        day: "numeric", month: "short", hour: "numeric", minute: "2-digit"
-      });
-    }
+    /* ---------------- submit ---------------- */
+    form.addEventListener("submit", function (e) {
+      e.preventDefault();
 
-    function plural(n, word) {
-      var v = parseInt(n, 10) || 0;
-      return v + " " + word + (v === 1 ? "" : "s");
-    }
-
-    function render() {
-      var list = load();
-      var going = list.filter(function (e) { return e.attending === "yes"; });
-      var kids = 0, adults = 0;
-      going.forEach(function (e) {
-        kids   += parseInt(e.kids, 10)   || 0;
-        adults += parseInt(e.adults, 10) || 0;
-      });
-
-      tally.textContent = list.length
-        ? going.length + " coming · " + kids + " kids · " + adults + " adults"
-        : "nothing yet";
-
-      if (!list.length) {
-        logBody.innerHTML = '<p class="empty">No replies saved on this device yet. Everyone\u2019s answers land in the Google Form sheet.</p>';
+      if (!whoInput.value.trim()) {
+        whoInput.focus();
+        whoInput.placeholder = "Please pop your name in here first";
+        return;
+      }
+      if (!phoneIn.value.trim()) {
+        phoneIn.focus();
+        phoneIn.placeholder = "A number so we can reach you";
         return;
       }
 
-      logBody.innerHTML = list.slice().reverse().map(function (e) {
-        var going = e.attending === "yes";
-        var head = '<p class="name"></p>';
-        var el = document.createElement("div");
-        el.className = "entry";
-        el.innerHTML = head +
-          '<span class="pill ' + (going ? "in" : "out") + '">' + (going ? "Coming" : "Can’t come") + '</span>' +
-          '<p class="meta"></p>' +
-          (e.note ? '<p class="note"></p>' : '') +
-          '<p class="stamp"></p>';
-        el.querySelector(".name").textContent = e.name;
-        el.querySelector(".meta").textContent = going
-          ? e.phone + " · " + plural(e.kids, "kid") + ", " + plural(e.adults, "adult")
-          : e.phone;
-        if (e.note) { el.querySelector(".note").textContent = "“" + e.note + "”"; }
-        el.querySelector(".stamp").textContent = fmtWhen(e.at);
-        return el.outerHTML;
-      }).join("");
-    }
+      var coming = attending() === "yes";
+      send(payload(coming));
 
-    document.getElementById("logToggle").addEventListener("click", function () {
-      var hidden = logCard.hasAttribute("hidden");
-      if (hidden) {
-        render();
-        logCard.removeAttribute("hidden");
-        logCard.scrollIntoView({ behavior: "smooth", block: "start" });
-      } else {
-        logCard.setAttribute("hidden", "");
+      try { localStorage.setItem(SEEN, coming ? "yes" : "no"); } catch (err) {}
+
+      showDone(coming
+        ? "Thank you — you're on the list. See you on the 19th!"
+        : "Thanks for letting us know. We'll miss you!");
+
+      document.getElementById("note").value = "";
+      done.scrollIntoView({ behavior: "smooth", block: "center" });
+    });
+
+    /* ---------------- returning guest ---------------- */
+    try {
+      var prev = localStorage.getItem(SEEN);
+      if (prev === "yes") {
+        showDone("You're on the list — see you on the 19th!");
+      } else if (prev === "no") {
+        showDone("You've told us you can't make it. Change of plans? Reply again.");
       }
-    });
-
-    /* ---------------- export ---------------- */
-    function csv() {
-      var q = function (v) { return '"' + String(v == null ? "" : v).replace(/"/g, '""') + '"'; };
-      var rows = [["Submitted", "Attending", "Name", "Phone", "Kids", "Adults", "Note"]];
-      load().forEach(function (e) {
-        rows.push([e.at, e.attending, e.name, e.phone, e.kids, e.adults, e.note]);
-      });
-      return rows.map(function (r) { return r.map(q).join(","); }).join("\r\n");
-    }
-
-    function plain() {
-      var list = load();
-      if (!list.length) { return "No RSVPs yet."; }
-      return list.map(function (e) {
-        var bits = [
-          fmtWhen(e.at) + " — " + e.name + (e.attending === "yes" ? " (coming)" : " (can't come)"),
-          "  phone: " + e.phone
-        ];
-        if (e.attending === "yes") { bits.push("  kids: " + e.kids + ", adults: " + e.adults); }
-        if (e.note) { bits.push("  note: " + e.note); }
-        return bits.join("\n");
-      }).join("\n\n");
-    }
-
-    function flash(btn, text) {
-      var was = btn.textContent;
-      btn.textContent = text;
-      setTimeout(function () { btn.textContent = was; }, 2400);
-    }
-
-    function browserSave(filename, text) {
-      var blob = new Blob([text], { type: "text/csv;charset=utf-8" });
-      var url = URL.createObjectURL(blob);
-      var a = document.createElement("a");
-      a.href = url;
-      a.download = filename;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      setTimeout(function () { URL.revokeObjectURL(url); }, 1500);
-    }
-
-    document.getElementById("dlCsv").addEventListener("click", function () {
-      var btn = this;
-      var text = csv();
-      if (!load().length) { flash(btn, "Nothing to save yet"); return; }
-
-      // Published on claude.ai the page must ask the viewer to save; a plain
-      // file:// or hosted copy just downloads it.
-      var viaHost = null;
-      try {
-        if (window.claude && typeof window.claude.use === "function") {
-          viaHost = window.claude.use("downloads");
-        }
-      } catch (err) { viaHost = null; }
-
-      if (!viaHost) { browserSave("yuna-rsvps.csv", text); return; }
-
-      viaHost.then(function (downloads) {
-        if (!downloads) { browserSave("yuna-rsvps.csv", text); return; }
-        return downloads.save({ filename: "yuna-rsvps.csv", data: text })
-          .catch(function (err) {
-            if (err && err.code === "extension_not_enabled") {
-              return downloads.save({ filename: "yuna-rsvps.txt", data: text });
-            }
-            throw err;
-          })
-          .catch(function (err) {
-            if (err && err.code === "declined") { return; }
-            flash(btn, "Couldn't save — use Copy all");
-          });
-      }, function () { browserSave("yuna-rsvps.csv", text); });
-    });
-
-    document.getElementById("copyLog").addEventListener("click", function () {
-      var btn = this;
-      var text = plain();
-      var ok = function () { flash(btn, "Copied"); };
-      if (navigator.clipboard && navigator.clipboard.writeText) {
-        navigator.clipboard.writeText(text).then(ok, function () { fallbackCopy(text, ok); });
-      } else {
-        fallbackCopy(text, ok);
-      }
-    });
-
-    function fallbackCopy(text, ok) {
-      var ta = document.createElement("textarea");
-      ta.value = text;
-      ta.setAttribute("readonly", "");
-      ta.style.position = "fixed";
-      ta.style.opacity = "0";
-      document.body.appendChild(ta);
-      ta.select();
-      try { document.execCommand("copy"); ok(); } catch (err) {}
-      document.body.removeChild(ta);
-    }
-
-    document.getElementById("clearLog").addEventListener("click", function () {
-      if (!load().length) { return; }
-      if (!window.confirm("Delete every RSVP saved on this device? This can't be undone.")) { return; }
-      save([]);
-      render();
-    });
-
-    /* ---------------- on load ---------------- */
-    var mine = load();
-    if (mine.length) {
-      var last = mine[mine.length - 1];
-      showDone(last.attending === "yes"
-        ? "You're on the list — see you on the 19th!"
-        : "You've told us you can't make it. Change of plans? Reply again.");
-    }
-    render();
+    } catch (err) {}
   })();
 </script>
 </body>
