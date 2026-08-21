@@ -346,6 +346,23 @@
   .done.warn .tick { display: none; }
   .send:disabled { opacity: .6; cursor: default; }
 
+  .contact {
+    margin: 20px 0 0;
+    text-align: center;
+    font-size: 14.5px;
+    line-height: 1.5;
+    color: var(--ink-soft);
+    text-wrap: pretty;
+  }
+  .contact a {
+    color: var(--berry-deep);
+    font-weight: 700;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    white-space: nowrap;
+  }
+  .contact a:hover { color: var(--berry); }
+
   footer {
     text-align: center;
     color: var(--ink-faint);
@@ -472,6 +489,11 @@
       </p>
 
     </form>
+
+    <p class="contact">
+      Trouble with the form, or a question? Text or call Yuna's mum Minjeong on
+      <a href="tel:+61432434161">0432&nbsp;434&nbsp;161</a>.
+    </p>
   </section>
 
   <footer>
@@ -569,7 +591,7 @@
         button.disabled = false;
         button.textContent = "Send RSVP";
         done.classList.add("warn");
-        showDone("That didn't send. Please check your connection and try again.");
+        showDone("That didn't send. Please try again, or text Minjeong on 0432 434 161.");
       });
     });
 
