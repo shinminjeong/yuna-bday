@@ -470,8 +470,6 @@
     };
 
     var FORM_ACTION = "https://docs.google.com/forms/d/e/" + FORM_ID + "/formResponse";
-    var SEEN = "yuna5.replied";   // just so a returning guest sees their answer
-
     var form     = document.getElementById("rsvpForm");
     var counts   = document.getElementById("counts");
     var done     = document.getElementById("done");
@@ -575,8 +573,6 @@
       var coming = attending() === "yes";
       send(payload(coming));
 
-      try { localStorage.setItem(SEEN, coming ? "yes" : "no"); } catch (err) {}
-
       showDone(coming
         ? "Thank you — you're on the list. See you on the 19th!"
         : "Thanks for letting us know. We'll miss you!");
@@ -585,15 +581,6 @@
       done.scrollIntoView({ behavior: "smooth", block: "center" });
     });
 
-    /* ---------------- returning guest ---------------- */
-    try {
-      var prev = localStorage.getItem(SEEN);
-      if (prev === "yes") {
-        showDone("You're on the list — see you on the 19th!");
-      } else if (prev === "no") {
-        showDone("You've told us you can't make it. Change of plans? Reply again.");
-      }
-    } catch (err) {}
   })();
 </script>
 </body>
